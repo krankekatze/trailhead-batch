@@ -1,0 +1,21 @@
+{
+  "file": {
+    "csvDirectory": "csv/",
+    "csvFileName": "trailblazers",
+    "logDirectory": "log"
+  },
+  "salesforce": {
+    "userName": "your-username@example.com",
+    "password": "your-password",
+    "shouldUpdate": true
+  },
+  "slack": {
+    "token": "xxxx-your-toke-here",
+    "channelId": "your-channel-id",
+    "userName": "Batch",
+    "shouldSendMessage": false
+  },
+  "puppeteer": {
+    "pageLoadWaitTime": 20000
+  }
+}
