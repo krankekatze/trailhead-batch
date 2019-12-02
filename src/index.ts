@@ -44,7 +44,7 @@ const connection = new jsforce.Connection({
 const SALESFORCE_USER_NAME = config.get('salesforce.userName');
 const SALESFORCE_PASSWORD = config.get('salesforce.password');
 
-connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, async function (err: any, userInfo: { id: string; organizationId: string; }) {
+connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, async (err: any, userInfo: { id: string; organizationId: string; }) => {
   if (err) {
     logger.error(err);
     await sendMessageToSlack('Failure: Salesforce: Authentication', 'danger');
@@ -61,7 +61,7 @@ connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, async function (err:
 
   logger.info(`query: ${query}`);
 
-  connection.query(query, async function (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) {
+  connection.query(query, async (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) => {
     if (err) {
       logger.error(err);
       await sendMessageToSlack('Failure: Salesforce: Query', 'danger');
@@ -147,7 +147,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     if (config.get('salesforce.shouldUpdate')) {
       connection.sobject('Trailblazer__c').update(
         statusArray,
-        async function (err: any, returnValues: { id: string; success: any; }[]) {
+        async (err: any, returnValues: { id: string; success: any; }[]) => {
           if (err) {
             logger.error('Failure: Salesforce: Update');
             logger.error(err);
@@ -198,7 +198,7 @@ async function exportHistoryFromSalesforce(minutesAgo: number) {
 
   logger.info(`query: ${query}`);
 
-  connection.query(query, async function (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) {
+  connection.query(query, async (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) => {
     if (err) {
       logger.error(err);
       await sendMessageToSlack('Failure: Salesforce: Query', 'danger');
