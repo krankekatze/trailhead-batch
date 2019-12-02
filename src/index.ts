@@ -44,10 +44,10 @@ const connection = new jsforce.Connection({
 const SALESFORCE_USER_NAME = config.get('salesforce.userName');
 const SALESFORCE_PASSWORD = config.get('salesforce.password');
 
-connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, function (err: any, userInfo: { id: string; organizationId: string; }) {
+connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, async function (err: any, userInfo: { id: string; organizationId: string; }) {
   if (err) {
     logger.error(err);
-    sendMessageToSlack('Failure: Salesforce: Authentication', 'danger');
+    await sendMessageToSlack('Failure: Salesforce: Authentication', 'danger');
     return;
   }
 
@@ -61,10 +61,10 @@ connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, function (err: any, 
 
   logger.info(`query: ${query}`);
 
-  connection.query(query, function (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) {
+  connection.query(query, async function (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) {
     if (err) {
       logger.error(err);
-      sendMessageToSlack('Failure: Salesforce: Query', 'danger');
+      await sendMessageToSlack('Failure: Salesforce: Query', 'danger');
       return;
     }
     logger.info(`total: ${result.totalSize}`);
@@ -105,7 +105,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         if (trailheadStatusElement === null) {
           logger.error('Failure: Get a page');
           logger.info('skipped.');
-          sendMessageToSlack(`Failure: Get a page: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning');
+          await sendMessageToSlack(`Failure: Get a page: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning');
           continue;
         }
 
@@ -114,7 +114,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         if (trailheadStausArray.length !== 8) {
           logger.error('Failure: Get element');
           logger.info('skipped.');
-          sendMessageToSlack(`Failure: Get element: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning');
+          await sendMessageToSlack(`Failure: Get element: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning');
           continue;
         }
 
@@ -136,7 +136,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     } catch (e) {
       logger.error('Failure: Puppeteer');
       logger.error(e);
-      sendMessageToSlack('Failure: Puppeteer', 'danger');
+      await sendMessageToSlack('Failure: Puppeteer', 'danger');
       throw e;
 
     } finally {
@@ -147,11 +147,11 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     if (config.get('salesforce.shouldUpdate')) {
       connection.sobject('Trailblazer__c').update(
         statusArray,
-        function (err: any, returnValues: { id: string; success: any; }[]) {
+        async function (err: any, returnValues: { id: string; success: any; }[]) {
           if (err) {
             logger.error('Failure: Salesforce: Update');
             logger.error(err);
-            sendMessageToSlack('Failure: Salesforce: Update', 'danger');
+            await sendMessageToSlack('Failure: Salesforce: Update', 'danger');
             return;
           }
           for (let value of returnValues) {
@@ -160,34 +160,34 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
             }
           }
           if (config.get('salesforce.shouldExportHistory')) {
-            exportHistoryFromSalesforce(5);
+            await exportHistoryFromSalesforce(5);
           }
         }
       );
     }
 
-    stringify(statusArray, { header: true }, (err: any, output: any) => {
+    stringify(statusArray, { header: true }, async (err: any, output: any) => {
       if (err) {
         logger.error('Failure: CSV: 1');
-        sendMessageToSlack('Failure: CSV: 1', 'danger');
+        await sendMessageToSlack('Failure: CSV: 1', 'danger');
         throw err;
       }
-      fs.writeFile(`${config.get('file.csvDirectory')}${config.get('file.csvFileName')}.csv`, output, (err: any) => {
+      fs.writeFile(`${config.get('file.csvDirectory')}${config.get('file.csvFileName')}.csv`, output, async (err: any) => {
         if (err) {
           logger.error('Failure: CSV: 2');
-          sendMessageToSlack('Failure: CSV: 2', 'danger');
+          await sendMessageToSlack('Failure: CSV: 2', 'danger');
           throw err;
         }
         logger.info(`${config.get('file.csvFileName')}.csv saved`);
       });
     });
 
-    sendMessageToSlack('Processed.', 'good');
+    await sendMessageToSlack('Processed.', 'good');
   })();
 }
 
 
-function exportHistoryFromSalesforce(minutesAgo: number) {
+async function exportHistoryFromSalesforce(minutesAgo: number) {
   let createdDate = new Date();
   createdDate.setMinutes(createdDate.getMinutes() - minutesAgo);
 
@@ -198,10 +198,10 @@ function exportHistoryFromSalesforce(minutesAgo: number) {
 
   logger.info(`query: ${query}`);
 
-  connection.query(query, function (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) {
+  connection.query(query, async function (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) {
     if (err) {
       logger.error(err);
-      sendMessageToSlack('Failure: Salesforce: Query', 'danger');
+      await sendMessageToSlack('Failure: Salesforce: Query', 'danger');
       return;
     }
     logger.info(`total: ${result.totalSize}`);
@@ -216,7 +216,7 @@ function exportHistoryFromSalesforce(minutesAgo: number) {
       messageArray.push(`${history.Parent.Name} : ${history.OldValue} -> ${history.NewValue}`);
     }
     if (messageArray.length > 0) {
-      sendMessageToSlack('• ' + messageArray.join('\n• '), '#764FA5', 'Difference');
+      await sendMessageToSlack('• ' + messageArray.join('\n• '), '#764FA5', 'Difference');
     }
   });
 }
