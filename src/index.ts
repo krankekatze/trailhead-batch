@@ -1,4 +1,11 @@
 const config = require('config');
+
+const i18n = new (require('i18n-2'))({
+  locales: ['en', 'ja'],
+  extension: '.json'
+});
+i18n.setLocale(config.get('locale'));
+
 const winston = require('winston');
 require('winston-daily-rotate-file');
 
@@ -29,7 +36,7 @@ const logger = winston.createLogger({
 logger.info('====================');
 
 const requestPromise = require('request-promise');
-sendMessageToSlack('Initiated.');
+sendMessageToSlack(i18n.__('Message.Initiated'));
 
 const fs = require('fs');
 const stringify = require('csv-stringify');
@@ -47,7 +54,7 @@ const SALESFORCE_PASSWORD = config.get('salesforce.password');
 connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, async (err: any, userInfo: { id: string; organizationId: string; }) => {
   if (err) {
     logger.error(err);
-    await sendMessageToSlack('Salesforce: Authentication', 'danger', 'Failure');
+    await sendMessageToSlack(i18n.__('Salesforce.Error.Authentication'), 'danger', i18n.__('Message.Failure'));
     return;
   }
 
@@ -64,7 +71,7 @@ connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, async (err: any, use
   connection.query(query, async (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) => {
     if (err) {
       logger.error(err);
-      await sendMessageToSlack('Salesforce: Query', 'danger', 'Failure');
+      await sendMessageToSlack(i18n.__('Salesforce.Error.Query'), 'danger', i18n.__('Message.Failure'));
       return;
     }
     logger.info(`total: ${result.totalSize}`);
@@ -103,18 +110,18 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
 
         const trailheadStatusElement = await page.$('c-trailhead-rank');
         if (trailheadStatusElement === null) {
-          logger.error('Failure: Get a page');
+          logger.error(i18n.__('Puppeteer.Error.GettingPage'));
           logger.info('skipped.');
-          await sendMessageToSlack(`Can't get a page: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning', 'Failure');
+          await sendMessageToSlack(`${i18n.__('Puppeteer.Error.GettingPage')}\n ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning', i18n.__('Message.Failure'));
           continue;
         }
 
         const trailheadStatusString: string = await (await trailheadStatusElement.getProperty('innerText')).jsonValue();
         const trailheadStausArray: string[] = trailheadStatusString.split('\n');
         if (trailheadStausArray.length !== 8) {
-          logger.error('Failure: Get element');
+          logger.error(i18n.__('Puppeteer.Error.GettingElement'));
           logger.info('skipped.');
-          await sendMessageToSlack(`Can't get element: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning', 'Failure');
+          await sendMessageToSlack(`${i18n.__('Puppeteer.Error.GettingElement')}\n ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning', i18n.__('Message.Failure'));
           continue;
         }
 
@@ -134,9 +141,9 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
       }
 
     } catch (e) {
-      logger.error('Failure: Puppeteer');
+      logger.error(i18n.__('Puppeteer.Error.Crash'));
       logger.error(e);
-      await sendMessageToSlack('Puppeteer', 'danger', 'Failure');
+      await sendMessageToSlack(i18n.__('Puppeteer.Error.Crash'), 'danger', i18n.__('Message.Failure'));
       throw e;
 
     } finally {
@@ -149,9 +156,9 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         statusArray,
         async (err: any, returnValues: { id: string; success: any; }[]) => {
           if (err) {
-            logger.error('Failure: Salesforce: Update');
+            logger.error(i18n.__('Salesforce.Error.Update'));
             logger.error(err);
-            await sendMessageToSlack('Salesforce: Update', 'danger', 'Failure');
+            await sendMessageToSlack(i18n.__('Salesforce.Error.Update'), 'danger', i18n.__('Message.Failure'));
             return;
           }
           for (let value of returnValues) {
@@ -168,21 +175,21 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
 
     stringify(statusArray, { header: true }, async (err: any, output: any) => {
       if (err) {
-        logger.error('Failure: CSV: 1');
-        await sendMessageToSlack('CSV: 1', 'danger', 'Failure');
+        logger.error(i18n.__('CSV.Error.Preparation'));
+        await sendMessageToSlack(i18n.__('CSV.Error.Preparation'), 'danger', i18n.__('Message.Failure'));
         throw err;
       }
       fs.writeFile(`${config.get('file.csvDirectory')}${config.get('file.csvFileName')}.csv`, output, async (err: any) => {
         if (err) {
-          logger.error('Failure: CSV: 2');
-          await sendMessageToSlack('CSV: 2', 'danger', 'Failure');
+          logger.error(i18n.__('CSV.Error.Save'));
+          await sendMessageToSlack(i18n.__('CSV.Error.Save'), 'danger', i18n.__('Message.Failure'));
           throw err;
         }
         logger.info(`${config.get('file.csvFileName')}.csv saved`);
       });
     });
 
-    await sendMessageToSlack('Processed.', 'good');
+    await sendMessageToSlack(i18n.__('Message.Processed'), 'good');
   })();
 }
 
@@ -201,7 +208,7 @@ async function exportHistoryFromSalesforce(minutesAgo: number) {
   connection.query(query, async (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) => {
     if (err) {
       logger.error(err);
-      await sendMessageToSlack('Salesforce: Query', 'danger', 'Failure');
+      await sendMessageToSlack(i18n.__('Salesforce.Error.Query'), 'danger', i18n.__('Message.Failure'));
       return;
     }
     logger.info(`total: ${result.totalSize}`);
@@ -216,7 +223,7 @@ async function exportHistoryFromSalesforce(minutesAgo: number) {
       messageArray.push(`${history.Parent.Name} : ${history.OldValue} -> ${history.NewValue}`);
     }
     if (messageArray.length > 0) {
-      await sendMessageToSlack('• ' + messageArray.join('\n• '), '#764FA5', 'Difference');
+      await sendMessageToSlack('• ' + messageArray.join('\n• '), '#764FA5', i18n.__('Message.Difference'));
     }
   });
 }

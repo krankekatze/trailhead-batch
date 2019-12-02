@@ -1,0 +1,28 @@
+{
+	"Message": {
+		"Difference": "差分",
+		"Failure": "失敗",
+		"Initiated": "処理開始",
+		"Processed": "処理完了."
+	},
+	"Salesforce": {
+		"Error": {
+			"Authentication": "Salesforce: 認証に失敗",
+			"Query": "Salesforce: クエリ失敗",
+			"Update": "Salesforce: アップデート失敗"
+		}
+	},
+	"Puppeteer": {
+		"Error": {
+			"Crash": "Puppeteer 処理に失敗",
+			"GettingPage": "ページの取得に失敗",
+			"GettingElement": "要素の取得に失敗"
+		}
+	},
+	"CSV": {
+		"Error": {
+			"Preparation": "CSV 準備に失敗",
+			"Save": "CSV 保存に失敗"
+		}
+	}
+}

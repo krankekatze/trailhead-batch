@@ -1,4 +1,5 @@
 {
+  "locale": "en",
   "file": {
     "csvDirectory": "csv/",
     "csvFileName": "trailblazers",

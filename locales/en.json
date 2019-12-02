@@ -1,0 +1,28 @@
+{
+	"Message": {
+		"Difference": "Difference",
+		"Failure": "Failure",
+		"Initiated": "Initiated.",
+		"Processed": "Processed."
+	},
+	"Salesforce": {
+		"Error": {
+			"Authentication": "Salesforce: Authentication Failure.",
+			"Query": "Salesforce: Query failed.",
+			"Update": "Salesforce: Update failed."
+		}
+	},
+	"Puppeteer": {
+		"Error": {
+			"Crash": "Puppeteer crashed.",
+			"GettingPage": "Failed to fetch a page.",
+			"GettingElement": "Failed to get element."
+		}
+	},
+	"CSV": {
+		"Error": {
+			"Preparation": "CSV preparation failed.",
+			"Save": "Failed to save CSV file."
+		}
+	}
+}
