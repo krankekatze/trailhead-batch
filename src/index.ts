@@ -51,15 +51,15 @@ connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, function (err: any, 
     return;
   }
 
-  logger.info('Access Token: ' + connection.accessToken);
-  logger.info('Instance URL: ' + connection.instanceUrl);
+  logger.info(`Access Token: ${connection.accessToken}`);
+  logger.info(`Instance URL: ${connection.instanceUrl}`);
 
-  logger.info('User ID: ' + userInfo.id);
-  logger.info('Org ID: ' + userInfo.organizationId);
+  logger.info(`User ID: ${userInfo.id}`);
+  logger.info(`Org ID: ${userInfo.organizationId}`);
 
   let query = 'SELECT Id, Name, Profile_Link__c FROM Trailblazer__c';
 
-  logger.info('query: ' + query);
+  logger.info(`query: ${query}`);
 
   connection.query(query, function (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) {
     if (err) {
@@ -67,11 +67,11 @@ connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, function (err: any, 
       sendMessageToSlack('Failure: Salesforce: Query');
       return;
     }
-    logger.info('total: ' + result.totalSize);
-    logger.info('done?: ' + result.done);
+    logger.info(`total: ${result.totalSize}`);
+    logger.info(`done?: ${result.done}`);
 
     if (!result.done) {
-      logger.info('next records URL: ' + result.nextRecordsUrl);
+      logger.info(`next records URL: ${result.nextRecordsUrl}`);
     }
 
     refreshTrailblazers(result.records);
@@ -80,7 +80,7 @@ connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, function (err: any, 
 
 
 async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Profile_Link__c: string; }[]) {
-  logger.info('trailblazers length: ' + trailblazers.length);
+  logger.info(`trailblazers length: ${trailblazers.length}`);
 
   await (async () => {
     let statusArray: { Id: string; Name: any; Badges__c: number; Points__c: number; Trails__c: number; }[] = [];
@@ -91,11 +91,11 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
       for (let trailblazer of trailblazers) {
         // for of -> sequential operation
         logger.info('----------');
-        logger.info('progress: ' + i + ' / ' + trailblazers.length);
+        logger.info(`progress: ${i} / ${trailblazers.length}`);
         i++;
 
-        logger.info('Id: ' + trailblazer.Id);
-        logger.info('URL: ' + trailblazer.Profile_Link__c);
+        logger.info(`Id: ${trailblazer.Id}`);
+        logger.info(`URL: ${trailblazer.Profile_Link__c}`);
 
         const page = await browser.newPage();
         await page.goto(trailblazer.Profile_Link__c, { waitUntil: 'networkidle2' });
@@ -105,7 +105,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         if (trailheadStatusElement === null) {
           logger.error('Failure: Get a page');
           logger.info('skipped.');
-          sendMessageToSlack('Failure: Get a page: ' + trailblazer.Id + ', ' + trailblazer.Name + ', ' + trailblazer.Profile_Link__c);
+          sendMessageToSlack(`Failure: Get a page: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
           continue;
         }
 
@@ -114,7 +114,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         if (trailheadStausArray.length !== 8) {
           logger.error('Failure: Get element');
           logger.info('skipped.');
-          sendMessageToSlack('Failure: Get element: ' + trailblazer.Id + ', ' + trailblazer.Name + ', ' + trailblazer.Profile_Link__c);
+          sendMessageToSlack(`Failure: Get element: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
           continue;
         }
 
@@ -147,7 +147,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     if (config.get('salesforce.shouldUpdate')) {
       connection.sobject('Trailblazer__c').update(
         statusArray,
-        function(err: any, returnValues: { id: string; success: any; }[]) {
+        function (err: any, returnValues: { id: string; success: any; }[]) {
           if (err) {
             logger.error('Failure: Salesforce: Update');
             logger.error(err);
@@ -156,7 +156,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
           }
           for (let value of returnValues) {
             if (value.success) {
-              logger.info('Updated Successfully: ' + value.id);
+              logger.info(`Updated Successfully: ${value.id}`);
             }
           }
         }
@@ -169,13 +169,13 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         sendMessageToSlack('Failure: CSV: 1');
         throw err;
       }
-      fs.writeFile(config.get('file.csvDirectory') + config.get('file.csvFileName') + '.csv', output, (err: any) => {
+      fs.writeFile(`${config.get('file.csvDirectory')}${config.get('file.csvFileName')}.csv`, output, (err: any) => {
         if (err) {
           logger.error('Failure: CSV: 2');
           sendMessageToSlack('Failure: CSV: 2');
           throw err;
         }
-        logger.info(config.get('file.csvFileName') + '.csv saved');
+        logger.info(`${config.get('file.csvFileName')}.csv saved`);
       });
     });
 
@@ -190,20 +190,20 @@ async function sendMessageToSlack(message : string) {
   }
 
   const response = await requestPromise({
-    uri : 'https://slack.com/api/chat.postMessage',
-    method : 'POST',
-    headers : {
-        'content-type' : 'application/x-www-form-urlencoded',
-        'charset' : 'utf-8'
+    uri: 'https://slack.com/api/chat.postMessage',
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'charset': 'utf-8'
     },
-    form : {
+    form: {
       token: config.get('slack.token'),
       channel: config.get('slack.channelId'),
       username: config.get('slack.userName'),
       text: message
     },
-    json : true
+    json: true
   });
 
-  logger.info('Slack response: ' + JSON.stringify(response));
+  logger.info(`Slack response: ${JSON.stringify(response)}`);
 }
