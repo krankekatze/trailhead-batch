@@ -47,7 +47,7 @@ const SALESFORCE_PASSWORD = config.get('salesforce.password');
 connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, async (err: any, userInfo: { id: string; organizationId: string; }) => {
   if (err) {
     logger.error(err);
-    await sendMessageToSlack('Failure: Salesforce: Authentication', 'danger');
+    await sendMessageToSlack('Salesforce: Authentication', 'danger', 'Failure');
     return;
   }
 
@@ -64,7 +64,7 @@ connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, async (err: any, use
   connection.query(query, async (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) => {
     if (err) {
       logger.error(err);
-      await sendMessageToSlack('Failure: Salesforce: Query', 'danger');
+      await sendMessageToSlack('Salesforce: Query', 'danger', 'Failure');
       return;
     }
     logger.info(`total: ${result.totalSize}`);
@@ -105,7 +105,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         if (trailheadStatusElement === null) {
           logger.error('Failure: Get a page');
           logger.info('skipped.');
-          await sendMessageToSlack(`Failure: Get a page: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning');
+          await sendMessageToSlack(`Can't get a page: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning', 'Failure');
           continue;
         }
 
@@ -114,7 +114,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         if (trailheadStausArray.length !== 8) {
           logger.error('Failure: Get element');
           logger.info('skipped.');
-          await sendMessageToSlack(`Failure: Get element: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning');
+          await sendMessageToSlack(`Can't get element: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning', 'Failure');
           continue;
         }
 
@@ -136,7 +136,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     } catch (e) {
       logger.error('Failure: Puppeteer');
       logger.error(e);
-      await sendMessageToSlack('Failure: Puppeteer', 'danger');
+      await sendMessageToSlack('Puppeteer', 'danger', 'Failure');
       throw e;
 
     } finally {
@@ -151,7 +151,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
           if (err) {
             logger.error('Failure: Salesforce: Update');
             logger.error(err);
-            await sendMessageToSlack('Failure: Salesforce: Update', 'danger');
+            await sendMessageToSlack('Salesforce: Update', 'danger', 'Failure');
             return;
           }
           for (let value of returnValues) {
@@ -169,13 +169,13 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     stringify(statusArray, { header: true }, async (err: any, output: any) => {
       if (err) {
         logger.error('Failure: CSV: 1');
-        await sendMessageToSlack('Failure: CSV: 1', 'danger');
+        await sendMessageToSlack('CSV: 1', 'danger', 'Failure');
         throw err;
       }
       fs.writeFile(`${config.get('file.csvDirectory')}${config.get('file.csvFileName')}.csv`, output, async (err: any) => {
         if (err) {
           logger.error('Failure: CSV: 2');
-          await sendMessageToSlack('Failure: CSV: 2', 'danger');
+          await sendMessageToSlack('CSV: 2', 'danger', 'Failure');
           throw err;
         }
         logger.info(`${config.get('file.csvFileName')}.csv saved`);
@@ -201,7 +201,7 @@ async function exportHistoryFromSalesforce(minutesAgo: number) {
   connection.query(query, async (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) => {
     if (err) {
       logger.error(err);
-      await sendMessageToSlack('Failure: Salesforce: Query', 'danger');
+      await sendMessageToSlack('Salesforce: Query', 'danger', 'Failure');
       return;
     }
     logger.info(`total: ${result.totalSize}`);
