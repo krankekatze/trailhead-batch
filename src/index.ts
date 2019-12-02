@@ -47,7 +47,7 @@ const SALESFORCE_PASSWORD = config.get('salesforce.password');
 connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, function (err: any, userInfo: { id: string; organizationId: string; }) {
   if (err) {
     logger.error(err);
-    sendMessageToSlack('Failure: Salesforce: Authentication');
+    sendMessageToSlack('Failure: Salesforce: Authentication', 'danger');
     return;
   }
 
@@ -64,7 +64,7 @@ connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, function (err: any, 
   connection.query(query, function (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) {
     if (err) {
       logger.error(err);
-      sendMessageToSlack('Failure: Salesforce: Query');
+      sendMessageToSlack('Failure: Salesforce: Query', 'danger');
       return;
     }
     logger.info(`total: ${result.totalSize}`);
@@ -105,7 +105,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         if (trailheadStatusElement === null) {
           logger.error('Failure: Get a page');
           logger.info('skipped.');
-          sendMessageToSlack(`Failure: Get a page: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
+          sendMessageToSlack(`Failure: Get a page: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning');
           continue;
         }
 
@@ -114,7 +114,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         if (trailheadStausArray.length !== 8) {
           logger.error('Failure: Get element');
           logger.info('skipped.');
-          sendMessageToSlack(`Failure: Get element: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
+          sendMessageToSlack(`Failure: Get element: ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning');
           continue;
         }
 
@@ -136,7 +136,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     } catch (e) {
       logger.error('Failure: Puppeteer');
       logger.error(e);
-      sendMessageToSlack('Failure: Puppeteer');
+      sendMessageToSlack('Failure: Puppeteer', 'danger');
       throw e;
 
     } finally {
@@ -151,7 +151,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
           if (err) {
             logger.error('Failure: Salesforce: Update');
             logger.error(err);
-            sendMessageToSlack('Failure: Salesforce: Update');
+            sendMessageToSlack('Failure: Salesforce: Update', 'danger');
             return;
           }
           for (let value of returnValues) {
@@ -169,20 +169,20 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     stringify(statusArray, { header: true }, (err: any, output: any) => {
       if (err) {
         logger.error('Failure: CSV: 1');
-        sendMessageToSlack('Failure: CSV: 1');
+        sendMessageToSlack('Failure: CSV: 1', 'danger');
         throw err;
       }
       fs.writeFile(`${config.get('file.csvDirectory')}${config.get('file.csvFileName')}.csv`, output, (err: any) => {
         if (err) {
           logger.error('Failure: CSV: 2');
-          sendMessageToSlack('Failure: CSV: 2');
+          sendMessageToSlack('Failure: CSV: 2', 'danger');
           throw err;
         }
         logger.info(`${config.get('file.csvFileName')}.csv saved`);
       });
     });
 
-    sendMessageToSlack('Processed.');
+    sendMessageToSlack('Processed.', 'good');
   })();
 }
 
@@ -201,7 +201,7 @@ function exportHistoryFromSalesforce(minutesAgo: number) {
   connection.query(query, function (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) {
     if (err) {
       logger.error(err);
-      sendMessageToSlack('Failure: Salesforce: Query');
+      sendMessageToSlack('Failure: Salesforce: Query', 'danger');
       return;
     }
     logger.info(`total: ${result.totalSize}`);
@@ -216,13 +216,13 @@ function exportHistoryFromSalesforce(minutesAgo: number) {
       messageArray.push(`${history.Parent.Name} : ${history.OldValue} -> ${history.NewValue}`);
     }
     if (messageArray.length > 0) {
-      sendMessageToSlack('• ' + messageArray.join('\n• '));
+      sendMessageToSlack('• ' + messageArray.join('\n• '), '#764FA5', 'Difference');
     }
   });
 }
 
 
-async function sendMessageToSlack(message: string) {
+async function sendMessageToSlack(message: string, color = '', title = '') {
   if (!config.get('slack.shouldSendMessage')) {
     return;
   }
@@ -238,7 +238,11 @@ async function sendMessageToSlack(message: string) {
       token: config.get('slack.token'),
       channel: config.get('slack.channelId'),
       username: config.get('slack.userName'),
-      text: message
+      attachments: JSON.stringify([{
+        title: title,
+        text: message,
+        color: color
+      }])
     },
     json: true
   });
