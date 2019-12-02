@@ -159,6 +159,9 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
               logger.info(`Updated Successfully: ${value.id}`);
             }
           }
+          if (config.get('salesforce.shouldExportHistory')) {
+            exportHistoryFromSalesforce(5);
+          }
         }
       );
     }
@@ -184,7 +187,42 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
 }
 
 
-async function sendMessageToSlack(message : string) {
+function exportHistoryFromSalesforce(minutesAgo: number) {
+  let createdDate = new Date();
+  createdDate.setMinutes(createdDate.getMinutes() - minutesAgo);
+
+  let query = 'SELECT Parent.Name, OldValue, NewValue, CreatedDate '
+    + 'FROM TrailBlazer__History '
+    + `WHERE Field = 'Badges__c' AND CreatedDate >= ${createdDate.toISOString()} `
+    + 'ORDER BY CreatedDate DESC';
+
+  logger.info(`query: ${query}`);
+
+  connection.query(query, function (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) {
+    if (err) {
+      logger.error(err);
+      sendMessageToSlack('Failure: Salesforce: Query');
+      return;
+    }
+    logger.info(`total: ${result.totalSize}`);
+    logger.info(`done?: ${result.done}`);
+
+    if (!result.done) {
+      logger.info(`next records URL: ${result.nextRecordsUrl}`);
+    }
+
+    let messageArray = [];
+    for (let history of result.records) {
+      messageArray.push(`${history.Parent.Name} : ${history.OldValue} -> ${history.NewValue}`);
+    }
+    if (messageArray.length > 0) {
+      sendMessageToSlack('• ' + messageArray.join('\n• '));
+    }
+  });
+}
+
+
+async function sendMessageToSlack(message: string) {
   if (!config.get('slack.shouldSendMessage')) {
     return;
   }
