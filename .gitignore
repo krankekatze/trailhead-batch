@@ -143,3 +143,5 @@ typings/
 .next
 
 /dist
+
+!.gitkeep
