@@ -16,7 +16,8 @@
 		"Error": {
 			"Crash": "Puppeteer 処理に失敗",
 			"GettingPage": "ページの取得に失敗",
-			"GettingElement": "要素の取得に失敗"
+			"GettingElement": "要素の取得に失敗",
+			"ScrapingData": "スクレイピングに失敗"
 		}
 	},
 	"CSV": {

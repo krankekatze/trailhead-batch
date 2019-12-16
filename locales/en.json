@@ -16,7 +16,8 @@
 		"Error": {
 			"Crash": "Puppeteer crashed.",
 			"GettingPage": "Failed to fetch a page.",
-			"GettingElement": "Failed to get element."
+			"GettingElement": "Failed to get element.",
+			"ScrapingData": "Failed to scrape data."
 		}
 	},
 	"CSV": {

@@ -91,6 +91,9 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
 
   await (async () => {
     let statusArray: { Id: string; Name: any; Badges__c: number; Points__c: number; Trails__c: number; }[] = [];
+    let trailblazersWithGettingPageError = [];
+    let trailblazersWithGettingElementError = [];
+    let trailblazersWithScrapingError = [];
 
     const browser = await puppeteer.launch();
     try {
@@ -105,39 +108,44 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         logger.info(`URL: ${trailblazer.Profile_Link__c}`);
 
         const page = await browser.newPage();
-        await page.goto(trailblazer.Profile_Link__c, { waitUntil: 'networkidle2' });
-        await page.waitFor(config.get('puppeteer.pageLoadWaitTime'));
+        try {
+          await page.goto(trailblazer.Profile_Link__c, { waitUntil: 'networkidle2' });
+          await page.waitFor(config.get('puppeteer.pageLoadWaitTime'));
 
-        const trailheadStatusElement = await page.$('c-trailhead-rank');
-        if (trailheadStatusElement === null) {
-          logger.error(i18n.__('Puppeteer.Error.GettingPage'));
-          logger.info('skipped.');
-          await sendMessageToSlack(`${i18n.__('Puppeteer.Error.GettingPage')}\n ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning', i18n.__('Message.Failure'));
-          continue;
+          const trailheadStatusElement = await page.$('c-trailhead-rank');
+          if (trailheadStatusElement === null) {
+            logger.error(i18n.__('Puppeteer.Error.GettingPage'));
+            trailblazersWithGettingPageError.push(`${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
+            continue;
+          }
+
+          const trailheadStatusString: string = await (await trailheadStatusElement.getProperty('innerText')).jsonValue();
+          const trailheadStausArray: string[] = trailheadStatusString.split('\n');
+          if (trailheadStausArray.length !== 8) {
+            logger.error(i18n.__('Puppeteer.Error.GettingElement'));
+            trailblazersWithGettingElementError.push(`${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
+            continue;
+          }
+
+          const nameElement = await page.$('h1');
+
+          let data = {
+            Id: trailblazer.Id,
+            Name: await (await nameElement.getProperty('innerText')).jsonValue(),
+            Badges__c: parseInt(trailheadStausArray[1].replace(',', ''), 10),
+            Points__c: parseInt(trailheadStausArray[3].replace(',', ''), 10),
+            Trails__c: parseInt(trailheadStausArray[5].replace(',', ''), 10)
+          };
+          logger.info(JSON.stringify(data));
+          statusArray.push(data);
+
+        } catch (e) {
+          logger.error(i18n.__('Puppeteer.Error.ScrapingData'));
+          trailblazersWithScrapingError.push(`${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
+
+        } finally {
+          page.close();
         }
-
-        const trailheadStatusString: string = await (await trailheadStatusElement.getProperty('innerText')).jsonValue();
-        const trailheadStausArray: string[] = trailheadStatusString.split('\n');
-        if (trailheadStausArray.length !== 8) {
-          logger.error(i18n.__('Puppeteer.Error.GettingElement'));
-          logger.info('skipped.');
-          await sendMessageToSlack(`${i18n.__('Puppeteer.Error.GettingElement')}\n ${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`, 'warning', i18n.__('Message.Failure'));
-          continue;
-        }
-
-        const nameElement = await page.$('h1');
-
-        let data = {
-          Id: trailblazer.Id,
-          Name: await (await nameElement.getProperty('innerText')).jsonValue(),
-          Badges__c: parseInt(trailheadStausArray[1].replace(',', ''), 10),
-          Points__c: parseInt(trailheadStausArray[3].replace(',', ''), 10),
-          Trails__c: parseInt(trailheadStausArray[5].replace(',', ''), 10)
-        };
-        logger.info(JSON.stringify(data));
-        statusArray.push(data);
-
-        page.close();
       }
 
     } catch (e) {
@@ -149,6 +157,16 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     } finally {
       await browser.close();
       logger.info('browser closed');
+
+      if (trailblazersWithGettingPageError.length > 0) {
+        await sendMessageToSlack(i18n.__('Puppeteer.Error.GettingPage') + '\n• ' + trailblazersWithGettingPageError.join('\n• '), 'warning', i18n.__('Message.Failure'));
+      }
+      if (trailblazersWithGettingElementError.length > 0) {
+        await sendMessageToSlack(i18n.__('Puppeteer.Error.GettingElement') + '\n• ' + trailblazersWithGettingElementError.join('\n• '), 'warning', i18n.__('Message.Failure'));
+      }
+      if (trailblazersWithScrapingError.length > 0) {
+        await sendMessageToSlack(i18n.__('Puppeteer.Error.ScrapingData') + '\n• ' + trailblazersWithScrapingError.join('\n• '), 'warning', i18n.__('Message.Failure'));
+      }
     }
 
     if (config.get('salesforce.shouldUpdate')) {
