@@ -116,6 +116,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
           if (trailheadStatusElement === null) {
             logger.error(i18n.__('Puppeteer.Error.GettingPage'));
             trailblazersWithGettingPageError.push(`${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
+            page.close();
             continue;
           }
 
@@ -124,6 +125,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
           if (trailheadStausArray.length !== 8) {
             logger.error(i18n.__('Puppeteer.Error.GettingElement'));
             trailblazersWithGettingElementError.push(`${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
+            page.close();
             continue;
           }
 
