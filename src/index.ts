@@ -110,36 +110,57 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
         const page = await browser.newPage();
         try {
           await page.goto(trailblazer.Profile_Link__c, { waitUntil: 'networkidle2' });
-          await page.waitFor(config.get('puppeteer.pageLoadWaitTime'));
 
-          const trailheadStatusElement = await page.$('c-trailhead-rank');
-          if (trailheadStatusElement === null) {
+          const waitInterval = 3000;
+          const repeatCountNumber  = config.get('puppeteer.pageLoadWaitTime') / waitInterval;
+
+          let isPageLoaded = false;
+          let isElementLoaded = false;
+
+          for (let j = 0; j < repeatCountNumber; j++) {
+            await page.waitFor(waitInterval);
+
+            if (await page.$('c-trailhead-rank').then((element: any) => !!element)) {
+              isPageLoaded = true;
+              const trailheadStatusElement = await page.$('c-trailhead-rank');
+              const trailheadStatusString: string = await (await trailheadStatusElement.getProperty('innerText')).jsonValue();
+              const trailheadStausArray: string[] = trailheadStatusString.split('\n');
+              if (trailheadStausArray.length === 8) {
+                isElementLoaded = true;
+
+                const nameElement = await page.$('h1');
+                let data = {
+                  Id: trailblazer.Id,
+                  Name: await (await nameElement.getProperty('innerText')).jsonValue(),
+                  Badges__c: parseInt(trailheadStausArray[1].replace(',', ''), 10),
+                  Points__c: parseInt(trailheadStausArray[3].replace(',', ''), 10),
+                  Trails__c: parseInt(trailheadStausArray[5].replace(',', ''), 10)
+                };
+
+                logger.info(JSON.stringify(data));
+                statusArray.push(data);
+              }
+
+            } else {
+              logger.info(`waiting for page to load... ${j}`);
+            }
+
+            if (isElementLoaded) {
+              break;
+
+            } else if (isPageLoaded) {
+              logger.info(`waiting for element to load... ${j}`);
+            }
+          }
+
+          if (!isPageLoaded) {
             logger.error(i18n.__('Puppeteer.Error.GettingPage'));
             trailblazersWithGettingPageError.push(`${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
-            page.close();
-            continue;
-          }
 
-          const trailheadStatusString: string = await (await trailheadStatusElement.getProperty('innerText')).jsonValue();
-          const trailheadStausArray: string[] = trailheadStatusString.split('\n');
-          if (trailheadStausArray.length !== 8) {
+          } else if (!isElementLoaded) {
             logger.error(i18n.__('Puppeteer.Error.GettingElement'));
             trailblazersWithGettingElementError.push(`${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
-            page.close();
-            continue;
           }
-
-          const nameElement = await page.$('h1');
-
-          let data = {
-            Id: trailblazer.Id,
-            Name: await (await nameElement.getProperty('innerText')).jsonValue(),
-            Badges__c: parseInt(trailheadStausArray[1].replace(',', ''), 10),
-            Points__c: parseInt(trailheadStausArray[3].replace(',', ''), 10),
-            Trails__c: parseInt(trailheadStausArray[5].replace(',', ''), 10)
-          };
-          logger.info(JSON.stringify(data));
-          statusArray.push(data);
 
         } catch (e) {
           logger.error(i18n.__('Puppeteer.Error.ScrapingData'));

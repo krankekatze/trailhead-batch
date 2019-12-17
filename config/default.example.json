@@ -18,6 +18,6 @@
     "shouldSendMessage": false
   },
   "puppeteer": {
-    "pageLoadWaitTime": 20000
+    "pageLoadWaitTime": 120000
   }
 }
