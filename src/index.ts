@@ -143,6 +143,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
 
         } catch (e) {
           logger.error(i18n.__('Puppeteer.Error.ScrapingData'));
+          logger.error(e);
           trailblazersWithScrapingError.push(`${trailblazer.Id}, ${trailblazer.Name}, ${trailblazer.Profile_Link__c}`);
 
         } finally {
