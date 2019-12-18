@@ -112,7 +112,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
           await page.goto(trailblazer.Profile_Link__c, { waitUntil: 'networkidle2' });
 
           const waitInterval = 3000;
-          const repeatCountNumber  = config.get('puppeteer.pageLoadWaitTime') / waitInterval;
+          const repeatCountNumber = config.get('puppeteer.pageLoadWaitTime') / waitInterval;
 
           let isPageLoaded = false;
           let isElementLoaded = false;
