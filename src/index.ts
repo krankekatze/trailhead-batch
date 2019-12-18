@@ -97,12 +97,12 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
 
     const browser = await puppeteer.launch();
     try {
-      let i = 1;
+      let i = 0;
       for (let trailblazer of trailblazers) {
         // for of -> sequential operation
         logger.info('----------');
-        logger.info(`progress: ${i} / ${trailblazers.length}`);
         i++;
+        logger.info(`progress: ${i} / ${trailblazers.length}`);
 
         logger.info(`Id: ${trailblazer.Id}`);
         logger.info(`URL: ${trailblazer.Profile_Link__c}`);
