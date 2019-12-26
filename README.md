@@ -9,8 +9,8 @@ This is a simple batch that scrape data from Trailhead profile pages and update 
 `Trailblazer__c` object has below fields.
 
 - Name
-- Badges__c
-- Points__c
+- Badges__c <- If field history is enabled, you can easily find differences.
+- Points__c <- If field history is enabled, you can easily find differences.
 - Trails__c
 - Profile_Link__c <- Just scraping data from this field value. Not update.
 

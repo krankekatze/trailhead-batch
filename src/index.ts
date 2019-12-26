@@ -209,7 +209,8 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
             }
           }
           if (config.get('salesforce.shouldExportHistory')) {
-            await exportHistoryFromSalesforce(5);
+            await exportBadgesHistoryFromSalesforce(5);
+            await exportPointsHistoryFromSalesforce(5);
           }
         }
       );
@@ -236,13 +237,23 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
 }
 
 
-async function exportHistoryFromSalesforce(minutesAgo: number) {
+async function exportBadgesHistoryFromSalesforce(minutesAgo: number) {
+  await exportHistoryFromSalesforce('Badges', 'Badges__c', minutesAgo);
+}
+
+
+async function exportPointsHistoryFromSalesforce(minutesAgo: number) {
+  await exportHistoryFromSalesforce('Points', 'Points__c', minutesAgo);
+}
+
+
+async function exportHistoryFromSalesforce(fieldName: string, fieldApiName: string, minutesAgo: number) {
   let createdDate = new Date();
   createdDate.setMinutes(createdDate.getMinutes() - minutesAgo);
 
   let query = 'SELECT Parent.Name, OldValue, NewValue, CreatedDate '
     + 'FROM TrailBlazer__History '
-    + `WHERE Field = 'Badges__c' AND CreatedDate >= ${createdDate.toISOString()} `
+    + `WHERE Field = '${fieldApiName}' AND CreatedDate >= ${createdDate.toISOString()} `
     + 'ORDER BY CreatedDate DESC';
 
   logger.info(`query: ${query}`);
@@ -265,7 +276,7 @@ async function exportHistoryFromSalesforce(minutesAgo: number) {
       messageArray.push(`${history.Parent.Name} : ${history.OldValue} -> ${history.NewValue}`);
     }
     if (messageArray.length > 0) {
-      await sendMessageToSlack('• ' + messageArray.join('\n• '), '#764FA5', i18n.__('Message.Difference'));
+      await sendMessageToSlack('• ' + messageArray.join('\n• '), '#764FA5', `${i18n.__('Message.Difference')} ${i18n.__(fieldName)}`);
     }
   });
 }
