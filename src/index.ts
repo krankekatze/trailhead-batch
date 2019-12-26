@@ -54,7 +54,7 @@ const SALESFORCE_PASSWORD = config.get('salesforce.password');
 connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, async (err: any, userInfo: { id: string; organizationId: string; }) => {
   if (err) {
     logger.error(err);
-    await sendMessageToSlack(i18n.__('Salesforce.Error.Authentication'), 'danger', i18n.__('Message.Failure'));
+    await sendMessageToSlack(`${i18n.__('Salesforce.Error.Authentication')}\n${err}`, 'danger', i18n.__('Message.Failure'));
     return;
   }
 
@@ -71,7 +71,7 @@ connection.login(SALESFORCE_USER_NAME, SALESFORCE_PASSWORD, async (err: any, use
   connection.query(query, async (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) => {
     if (err) {
       logger.error(err);
-      await sendMessageToSlack(i18n.__('Salesforce.Error.Query'), 'danger', i18n.__('Message.Failure'));
+      await sendMessageToSlack(`${i18n.__('Salesforce.Error.Query')}\n${err}`, 'danger', i18n.__('Message.Failure'));
       return;
     }
     logger.info(`total: ${result.totalSize}`);
@@ -175,7 +175,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     } catch (e) {
       logger.error(i18n.__('Puppeteer.Error.Crash'));
       logger.error(e);
-      await sendMessageToSlack(i18n.__('Puppeteer.Error.Crash'), 'danger', i18n.__('Message.Failure'));
+      await sendMessageToSlack(`${i18n.__('Puppeteer.Error.Crash')}\n${e}`, 'danger', i18n.__('Message.Failure'));
       throw e;
 
     } finally {
@@ -200,7 +200,7 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
           if (err) {
             logger.error(i18n.__('Salesforce.Error.Update'));
             logger.error(err);
-            await sendMessageToSlack(i18n.__('Salesforce.Error.Update'), 'danger', i18n.__('Message.Failure'));
+            await sendMessageToSlack(`${i18n.__('Salesforce.Error.Update')}\n${err}`, 'danger', i18n.__('Message.Failure'));
             return;
           }
           for (let value of returnValues) {
@@ -219,13 +219,13 @@ async function refreshTrailblazers(trailblazers: { Id: string, Name: string, Pro
     stringify(statusArray, { header: true }, async (err: any, output: any) => {
       if (err) {
         logger.error(i18n.__('CSV.Error.Preparation'));
-        await sendMessageToSlack(i18n.__('CSV.Error.Preparation'), 'danger', i18n.__('Message.Failure'));
+        await sendMessageToSlack(`${i18n.__('CSV.Error.Preparation')}\n${err}`, 'danger', i18n.__('Message.Failure'));
         throw err;
       }
       fs.writeFile(`${config.get('file.csvDirectory')}${config.get('file.csvFileName')}.csv`, output, async (err: any) => {
         if (err) {
           logger.error(i18n.__('CSV.Error.Save'));
-          await sendMessageToSlack(i18n.__('CSV.Error.Save'), 'danger', i18n.__('Message.Failure'));
+          await sendMessageToSlack(`${i18n.__('CSV.Error.Save')}\n${err}`, 'danger', i18n.__('Message.Failure'));
           throw err;
         }
         logger.info(`${config.get('file.csvFileName')}.csv saved`);
@@ -261,7 +261,7 @@ async function exportHistoryFromSalesforce(fieldName: string, fieldApiName: stri
   connection.query(query, async (err: any, result: { totalSize: string; records: any[]; done: string; nextRecordsUrl: string; }) => {
     if (err) {
       logger.error(err);
-      await sendMessageToSlack(i18n.__('Salesforce.Error.Query'), 'danger', i18n.__('Message.Failure'));
+      await sendMessageToSlack(`${i18n.__('Salesforce.Error.Query')}\n${err}`, 'danger', i18n.__('Message.Failure'));
       return;
     }
     logger.info(`total: ${result.totalSize}`);
