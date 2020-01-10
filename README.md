@@ -22,6 +22,12 @@ This is a simple batch that scrapes data from Trailhead profile pages and update
 
 Edit `config/default.json`.
 
+## Slack notification
+
+Slack notification included.
+
+![Slack notification](image/slack_notification.png "Slack notification")
+
 ## Special thanks
 
 [meruff/trailhead\-leaderboard](https://github.com/meruff/trailhead-leaderboard)
