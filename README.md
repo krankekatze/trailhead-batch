@@ -2,17 +2,21 @@
 
 ## Summary
 
-This is a simple batch that scrape data from Trailhead profile pages and update `Trailblazer__c` records in Salesforce.
+This is a simple batch that scrapes data from Trailhead profile pages and update `Trailblazer__c` records in Salesforce.
 
 ## Trailblazer__c Object
 
 `Trailblazer__c` object has below fields.
 
 - Name
-- Badges__c <- If field history is enabled, you can easily find differences.
-- Points__c <- If field history is enabled, you can easily find differences.
-- Trails__c
-- Profile_Link__c <- Just scraping data from this field value. Not update.
+- Badges__c [*1]
+- Points__c [*1]
+- Trails__c [*1]
+- Profile_Link__c [*2]
+
+[*1]: If field history is enabled, you can easily find differences.
+
+[*2]: The batch scrapes data from this field value and doesn't update the field.
 
 ## Config
 
